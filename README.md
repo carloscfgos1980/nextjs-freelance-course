@@ -81,3 +81,175 @@ const nextConfig: NextConfig = {
 };
 
 - <hostname> will contain the URL and <pathname> follow by ** wich means includes everything comes afterwards
+
+# 15/04/2025
+
+- Optimizing fonts:
+
+import { Geist } from 'next/font/google'
+
+const geist = Geist({
+  subsets: ['latin'],
+})
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" className={geist.className}>
+      <body>{children}</body>
+    </html>
+  )
+}
+
+
+- Local fonts:
+To use a local font, import your font from next/font/local and specify the src of your local font file
+
+import localFont from 'next/font/local'
+
+const myFont = localFont({
+  src: './my-font.woff2',
+})
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className={myFont.className}>
+      <body>{children}</body>
+    </html>
+  )
+}
+
+- If you want to use multiple files for a single font family, src can be an array:
+
+const roboto = localFont({
+  src: [
+    {
+      path: './Roboto-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: './Roboto-Italic.woff2',
+      weight: '400',
+      style: 'italic',
+    },
+    {
+      path: './Roboto-Bold.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+    {
+      path: './Roboto-BoldItalic.woff2',
+      weight: '700',
+      style: 'italic',
+    },
+  ],
+})
+
+# CSS
+
+- Next.js provides several ways to use CSS in your application, including:
+
+CSS Modules
+Global CSS
+Tailwind CSS
+Sass
+CSS-in-JS
+External Stylesheets
+
+- CSS Modules. Example:
+
+<app/blog/styles.module.css>
+.blog {
+  padding: 24px;
+}
+
+<app/blog/page.tsx>
+import styles from './styles.module.css'
+
+export default function Page({ children }: { children: React.ReactNode }) {
+  return <main className={styles.blog}>{children}</main>
+}
+
+- Global CSS
+You can use global CSS to apply styles across your application.
+
+To use global styles, create a app/global.css file and import it in the root layout to apply the styles to every route in your application. Example:
+
+- <app/global.css>
+body {
+  padding: 20px 20px 60px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+- <app/layout.tsx>
+// These styles apply to every route in the application
+import './global.css'
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}
+
+- Tailwind CSS
+Installing Tailwind
+
+To start using Tailwind, install the necessary Tailwind CSS packages:
+npm install tailwindcss @tailwindcss/postcss postcss
+
+- Configuring Tailwind:
+Create a postcss.config.mjs file in the root of your project and add the @tailwindcss/postcss plugin to your PostCSS configuration:
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+}
+
+* This file was already there in the installation and is it slightly different from the tutorial...
+
+- Using Tailwind
+Add the Tailwind directives to your Global Stylesheet:
+
+<app/globals.css>
+@import 'tailwindcss';
+
+Then, import the styles in the root layout:
+<app/layout.tsx>
+// These styles apply to every route in the application
+import './globals.css'
+
+- You can then start writing Tailwind's utility classes in your application.
+<app/page.tsx>
+export default function Page() {
+  return <h1 className="text-3xl font-bold underline">Hello, Next.js!</h1>
+}
+
+- Sass
+Next.js integrates with Sass using both the .scss and .sass extensions and syntax.
+
+You can also use component-level Sass via CSS Modules and the .module.scssor .module.sass extension.
+
+Installing Sass
+
+To start using Sass, install the sass package:
+npm install --save-dev sass
+
+- CSS-in-JS
+Warning: CSS-in-JS libraries which require runtime JavaScript are not currently supported in React Server Components. Using CSS-in-JS with newer React features like Server Components and Streaming requires library authors to support the latest version of React.
+
+If you want to style Server Components, we recommend using CSS Modules or other solutions that output CSS files, like Tailwind CSS.
+
+* I did not copy the configuration of because I don't think I will be using that any time soon!
