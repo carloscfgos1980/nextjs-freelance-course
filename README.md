@@ -253,3 +253,233 @@ Warning: CSS-in-JS libraries which require runtime JavaScript are not currently 
 If you want to style Server Components, we recommend using CSS Modules or other solutions that output CSS files, like Tailwind CSS.
 
 * I did not copy the configuration of because I don't think I will be using that any time soon!
+
+# 17/04/2025
+
+
+- Fetching data
+https://nextjs.org/docs/app/getting-started/fetching-data
+
+You can fetch data in Server Components using:
+
+The fetch API
+An ORM or database
+
+- With the fetch API:
+
+- With an ORM or database
+
+<app/blog/page.tsx>
+import { db, posts } from '@/lib/db'
+
+export default async function Page() {
+  const allPosts = await db.select().from(posts)
+  return (
+    <ul>
+      {allPosts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  )
+}
+
+- Here I had issue with @/lib/db. i'll that out later
+
+- Client Components
+
+There are two ways to fetch data in Client Components, using:
+
+React's use hook
+A community library like SWR or React Query
+
+<With the use hook>
+You can use React's use hook to stream data from the server to client. Start by fetching data in your Server component, and pass the promise to your Client Component as prop:
+
+<app/blog/page.tsx>
+import Posts from '@/app/ui/posts
+import { Suspense } from 'react'
+
+export default function Page() {
+  // Don't await the data fetching function
+  const posts = getPosts()
+
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Posts posts={posts} />
+    </Suspense>
+  )
+}
+
+Then, in your Client Component, use the use hook to read the promise:
+
+<app/ui/post.tsx> here it is created a folder (ui)
+'use client'
+import { use } from 'react'
+
+export default function Posts({
+  posts,
+}: {
+  posts: Promise<{ id: string; title: string }[]>
+}) {
+  const allPosts = use(posts)
+
+  return (
+    <ul>
+      {allPosts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  )
+}
+
+- Community libraries
+
+You can use a community library like SWR or React Query to fetch data in Client Components. These libraries have their own semantics for caching, streaming, and other features. For example, with SWR:
+
+<app/blog/page.tsx>
+'use client'
+import useSWR from 'swr'
+
+const fetcher = (url) => fetch(url).then((r) => r.json())
+
+export default function BlogPage() {
+  const { data, error, isLoading } = useSWR(
+    '<https://api.vercel.app/blog>',
+    fetcher
+  )
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+
+  return (
+    <ul>
+      {data.map((post: { id: string; title: string }) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  )
+}
+
+- STREAMING
+* I did not check that out. It seems way to much trouble
+
+
+# How to update data
+Creating Server Functions
+
+A Server Function can be defined by using the use server directive. You can place the directive at the top of an asynchronous function to mark the function as a Server Function, or at the top of a separate file to mark all exports of that file.
+
+<app/lib/action.ts>
+export async function createPost(formData: FormData) {
+  'use server'
+  const title = formData.get('title')
+  const content = formData.get('content')
+
+  // Update data
+  // Revalidate cache
+}
+
+export async function deletePost(formData: FormData) {
+  'use server'
+  const id = formData.get('id')
+
+  // Update data
+  // Revalidate cache
+}
+
+- Server Components
+
+Server Functions can be inlined in Server Components by adding the "use server" directive to the top of the function body:
+export default function Page() {
+  // Server Action
+  async function createPost(formData: FormData) {
+    'use server'
+    // ...
+  }
+
+  return <></>
+}
+
+Client Components
+
+It's not possible to define Server Functions in Client Components. However, you can invoke them in Client Components by importing them from a file that has the "use server" directive at the top of it:
+<app/actions.ts>
+'use server'
+
+export async function createPost() {}
+
+<app/ui/buttons.tsx>
+'use client'
+
+import { createPost } from '@/app/actions'
+
+export function Button() {
+  return <button formAction={createPost}>Create</button>
+}
+
+- Invoking Server Functions
+
+There are two main ways you can invoke a Server Function:
+
+1. Forms in Server and Client Components
+2. Event Handlers in Client Components
+
+- Forms
+
+React extends the HTML <form> element to allow Server Function to be invoked with the HTML action prop.
+
+When invoked in a form, the function automatically receives the FormData object. You can extract the data using the native FormData methods:
+
+<app/ui/form.tsx>
+import { createPost } from '@/app/actions'
+
+export function Form() {
+  return (
+    <form action={createPost}>
+      <input type="text" name="title" />
+      <input type="text" name="content" />
+      <button type="submit">Create</button>
+    </form>
+  )
+}
+
+<app/actions.ts>
+'use server'
+
+export async function createPost(formData: FormData) {
+  const title = formData.get('title')
+  const content = formData.get('content')
+
+  // Update data
+  // Revalidate cache
+}
+
+- Event Handlers
+
+You can invoke a Server Function in a Client Component by using event handlers such as onClick.
+
+<app/like-button.tsx>
+'use client'
+
+import { incrementLike } from './actions'
+import { useState } from 'react'
+
+export default function LikeButton({ initialLikes }: { initialLikes: number }) {
+  const [likes, setLikes] = useState(initialLikes)
+
+  return (
+    <>
+      <p>Total Likes: {likes}</p>
+      <button
+        onClick={async () => {
+          const updatedLikes = await incrementLike()
+          setLikes(updatedLikes)
+        }}
+      >
+        Like
+      </button>
+    </>
+  )
+}
+
+# 18/04/2025
