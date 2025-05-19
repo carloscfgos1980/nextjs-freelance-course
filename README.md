@@ -283,7 +283,7 @@ export default async function Page() {
   )
 }
 
-- Here I had issue with @/lib/db. i'll that out later
+- Here I had issue with @/lib/db. I'll check that out later
 
 - Client Components
 
@@ -468,7 +468,7 @@ export default function LikeButton({ initialLikes }: { initialLikes: number }) {
   const [likes, setLikes] = useState(initialLikes)
 
   return (
-    <>
+    <div>
       <p>Total Likes: {likes}</p>
       <button
         onClick={async () => {
@@ -478,8 +478,154 @@ export default function LikeButton({ initialLikes }: { initialLikes: number }) {
       >
         Like
       </button>
-    </>
+    </div>
   )
 }
 
-# 18/04/2025
+# 19/05/2025
+
+Starting again after the holidays in Cuba
+
+- How to handle errors
+
+Errors can be divided into two categories: expected errors and uncaught exceptions. This page will walk you through how you can handle these errors in your Next.js application.
+
+Handling expected errors
+
+Expected errors are those that can occur during the normal operation of the application, such as those from server-side form validation or failed requests. These errors should be handled explicitly and returned to the client.
+
+I don't know what the hell is not working... I got the idea anyway
+
+app/actions.ts
+
+'use server'
+
+export async function createPost(prevState: any, formData: FormData) {
+  const title = formData.get('title')
+  const content = formData.get('content')
+
+  const res = await fetch('<https://api.vercel.app/posts>', {
+    method: 'POST',
+    body: { title, content },
+  })
+  const json = await res.json()
+
+  if (!res.ok) {
+    return { message: 'Failed to create post' }
+  }
+}
+
+
+app/ui/form.tsx:
+
+'use client'
+
+import { useActionState } from 'react'
+import { createPost } from '@/app/actions'
+
+const initialState = {
+  message: '',
+}
+
+export function Form() {
+  const [state, formAction, pending] = useActionState(createPost, initialState)
+
+  return (
+    <form action={formAction}>
+      <label htmlFor="title">Title</label>
+      <input type="text" id="title" name="title" required />
+      <label htmlFor="content">Content</label>
+      <textarea id="content" name="content" required />
+      {state?.message && <p aria-live="polite">{state.message}</p>}
+      <button disabled={pending}>Create Post</button>
+    </form>
+  )
+}
+
+
+- Server Components
+
+When fetching data inside of a Server Component, you can use the response to conditionally render an error message or redirect.
+
+export default async function Page() {
+  const res = await fetch(`https://...`)
+  const data = await res.json()
+
+  if (!res.ok) {
+    return 'There was an error.'
+  }
+
+  return '...'
+}
+
+
+- Not found
+
+You can call the notFound function within a route segment and use the not-found.js file to show a 404 UI.
+
+app/blog/[slug]page.tsx
+import { getPostBySlug } from '@/lib/posts'
+
+export default async function Page({ params }: { params: { slug: string } }) {
+  const { slug } = await params
+  const post = getPostBySlug(slug)
+
+  if (!post) {
+    notFound()
+  }
+
+  return <div>{post.title}</div>
+}
+
+
+app/blog/not-found.tsx
+export default function NotFound() {
+  return <div>404 - Page Not Found</div>
+}
+
+
+- Handling uncaught exceptions
+
+Uncaught exceptions are unexpected errors that indicate bugs or issues that should not occur during the normal flow of your application. These should be handled by throwing errors, which will then be caught by error boundaries.
+
+Nested error boundaries
+
+Next.js uses error boundaries to handle uncaught exceptions. Error boundaries catch errors in their child components and display a fallback UI instead of the component tree that crashed.
+
+Create an error boundary by adding an error.js file inside a route segment and exporting a React component:
+
+app/dashboard/error.tsx
+
+'use client' // Error boundaries must be Client Components
+
+import { useEffect } from 'react'
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  useEffect(() => {
+    // Log the error to an error reporting service
+    console.error(error)
+  }, [error])
+
+  return (
+    <div>
+      <h2>Something went wrong!</h2>
+      <button
+        onClick={
+          // Attempt to recover by trying to re-render the segment
+          () => reset()
+        }
+      >
+        Try again
+      </button>
+    </div>
+  )
+}
+
+
+* This segment didn't quite work. I will give a try in another moment. I am a bit rosty

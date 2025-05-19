@@ -9,7 +9,7 @@ export default async function Page() {
     <div>
         <h1>List of posts</h1>
         <ul>
-        {posts.map((post) => (
+        {posts.map((post:any) => (
             <li key={post.id}>{post.title}</li>
         ))}
         </ul>
